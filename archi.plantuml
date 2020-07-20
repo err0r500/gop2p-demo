@@ -1,0 +1,48 @@
+@startuml archi
+
+node "central server" {
+    interface "server API" as sAPI
+    sAPI -up-> [server logic]
+}
+
+node "client 1" {
+    interface "front API" as frontAPI
+    interface "p2p API" as p2pAPI
+    interface HTTPClient as httpP2p
+
+    node logic as logic1 {
+      component "front logic" as frontLogic
+      component "p2p logic" as p2pLogic
+    }
+
+    p2pAPI -down-> p2pLogic
+    frontAPI -up-> frontLogic
+    frontLogic -up-> httpP2p
+}
+
+node "client 2" {
+    interface "front API" as frontAPI2
+    interface "p2p API" as p2pAPI2
+    interface HTTPClient as httpP2p2
+
+    node logic as logic2 {
+      component "front logic" as frontLogic2
+      component "p2p logic" as p2pLogic2
+    }
+
+    p2pAPI2 -down-> p2pLogic2
+    frontAPI2 -up-> frontLogic2
+    frontLogic2 -up-> httpP2p2
+}
+
+
+
+httpP2p -up-> sAPI
+httpP2p2 -up-> sAPI
+httpP2p ..> p2pAPI2
+httpP2p2 ..> p2pAPI
+
+[front1] -up-> frontAPI
+[front2] -up-> frontAPI2
+
+@enduml
