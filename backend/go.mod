@@ -3,19 +3,20 @@ module gop2p
 go 1.13
 
 require (
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
-	github.com/golang/gddo v0.0.0-20200715224205-051695c33a3f
+	github.com/kr/pretty v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
-	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
-	github.com/onsi/ginkgo v1.14.0
-	github.com/onsi/gomega v1.10.1
-	github.com/ory/viper v1.7.5
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
-	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
+	github.com/uber/jaeger-client-go v2.25.0+incompatible
+	github.com/uber/jaeger-lib v2.2.0+incompatible
+	golang.org/x/sys v0.0.0-20200519105757-fe76b779f299 // indirect
+	golang.org/x/tools v0.0.0-20191112195655-aa38f8e97acc
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	gopkg.in/h2non/baloo.v3 v3.0.2
-	gopkg.in/h2non/gentleman.v2 v2.0.4 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

@@ -1,17 +1,10 @@
 package uc_test
 
 import (
-	"errors"
 	"gop2p/domain"
 	"gop2p/uc"
 
 	. "github.com/smartystreets/goconvey/convey"
-)
-
-// failing side effects functions
-var (
-	failingGetUser       = func(_, _ string) (*domain.User, error) { return nil, errors.New("woops") }
-	failingInsertSession = func(_, _ string) error { return errors.New("woops") }
 )
 
 func noSessionIsCreated(sm uc.SessionManager, uName string) {

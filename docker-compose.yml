@@ -7,6 +7,12 @@ services:
     environment:
       - SERVER=true
       - API_PORT=3000
+      - JAEGER_SERVICE_NAME=central_server
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    depends_on:
+      - jaeger
 
   client1:
     build: ./backend/.
@@ -15,6 +21,13 @@ services:
     environment:
       - API_PORT=3000
       - P2P_PORT=4000
+      - SERVER_ADDRESS=central:3000
+      - JAEGER_SERVICE_NAME=client1
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    depends_on:
+      - jaeger
 
   client2:
     build: ./backend/.
@@ -23,5 +36,15 @@ services:
     environment:
       - API_PORT=3000
       - P2P_PORT=4000
+      - SERVER_ADDRESS=central:3000
+      - JAEGER_SERVICE_NAME=client2
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    depends_on:
+      - jaeger
 
-
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - 16686:16686

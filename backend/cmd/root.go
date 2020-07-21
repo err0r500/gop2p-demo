@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,9 +11,10 @@ import (
 )
 
 const (
-	serverModeKey = "server"
-	apiPortKey    = "api_port"
-	p2pPortKey    = "p2p_port"
+	serverModeKey    = "server"
+	apiPortKey       = "api_port"
+	p2pPortKey       = "p2p_port"
+	serverAddressKey = "server_address"
 )
 
 var rootCmd = &cobra.Command{
@@ -26,9 +28,16 @@ var rootCmd = &cobra.Command{
 		if viper.GetBool(serverModeKey) {
 			startInServerMode(viper.GetInt(apiPortKey))
 		} else {
+			serverAddress := viper.GetString(serverAddressKey)
+			if serverAddress == "" {
+				log.Fatal("server address is mandatory in client mode")
+				return
+			}
+
 			startInClientMode(
 				viper.GetInt(apiPortKey),
 				viper.GetInt(p2pPortKey),
+				serverAddress,
 			)
 		}
 	},
@@ -49,13 +58,16 @@ func init() {
 
 	// we select if the app runs in client or server mode, defaults to client mode
 	rootCmd.Flags().BoolP(serverModeKey, "s", false, "Run gop2p in server mode, default: false")
-	viper.BindPFlag(serverModeKey, rootCmd.Flags().Lookup(serverModeKey))
+	_ = viper.BindPFlag(serverModeKey, rootCmd.Flags().Lookup(serverModeKey))
 
 	// we select the port on which the API server will listen on, defaults to 3000
 	rootCmd.Flags().IntP(apiPortKey, "p", 3000, "The API port to listen on")
-	viper.BindPFlag(apiPortKey, rootCmd.Flags().Lookup(apiPortKey))
+	_ = viper.BindPFlag(apiPortKey, rootCmd.Flags().Lookup(apiPortKey))
 
 	// we select the port on which the P2P server will listen on, defaults to 4000
 	rootCmd.Flags().Int(p2pPortKey, 4000, "The port used for p2p communication between clients")
-	viper.BindPFlag(p2pPortKey, rootCmd.Flags().Lookup(p2pPortKey))
+	_ = viper.BindPFlag(p2pPortKey, rootCmd.Flags().Lookup(p2pPortKey))
+
+	rootCmd.Flags().String(serverAddressKey, "", "The address where the client can reach the central server")
+	_ = viper.BindPFlag(serverAddressKey, rootCmd.Flags().Lookup(serverAddressKey))
 }
