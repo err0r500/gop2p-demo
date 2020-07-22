@@ -22,6 +22,7 @@ with each other and finally check their conversations.
 
 Run :
 ```$xslt
+docker-compose up -d
 ./test.sh
 ```
 
