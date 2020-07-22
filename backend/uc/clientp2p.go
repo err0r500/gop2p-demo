@@ -1,6 +1,7 @@
 package uc
 
 import (
+	"context"
 	"github.com/opentracing/opentracing-go"
 	"gop2p/domain"
 	"log"
@@ -8,7 +9,7 @@ import (
 
 // ClientP2PLogic handles the logic of the central server
 type ClientP2PLogic interface {
-	HandleMessageReceived(msg string, emitter domain.User) error
+	HandleMessageReceived(ctx context.Context, msg string, emitter domain.User) error
 }
 
 type clientp2pInteractor struct {
@@ -20,8 +21,8 @@ func NewClientP2pLogic(cm ConversationManager) ClientP2PLogic {
 }
 
 // HandleMessageReceived is used by the client to handle a new message
-func (i clientp2pInteractor) HandleMessageReceived(msg string, emitter domain.User) error {
-	span := opentracing.GlobalTracer().StartSpan("uc:handle_new_message_received")
+func (i clientp2pInteractor) HandleMessageReceived(ctx context.Context, msg string, emitter domain.User) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:handle_new_message_received")
 	defer span.Finish()
 
 	if err := i.cm.AppendToConversationWith(emitter.Login, emitter.Login, msg); err != nil {

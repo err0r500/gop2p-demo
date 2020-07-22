@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"gop2p/domain"
+	"gop2p/driving/api.mux"
 	"gop2p/uc"
 	"io/ioutil"
 	"net/http"
@@ -21,23 +22,18 @@ func New(serverAddress string, logger uc.Logger) uc.ServerGateway {
 }
 
 func (c caller) AskSessionToServer(ctx context.Context, from string, to string) (*domain.Session, *domain.ErrTechnical) {
-	request, err := http.NewRequest(http.MethodGet, "http://"+c.serverAddress+"/sessions/"+to, nil)
+	req, err := http.NewRequest(http.MethodGet, "http://"+c.serverAddress+"/sessions/"+to, nil)
 	if err != nil {
 		c.l.Log(err)
 		return nil, &domain.ErrTechnical{}
 	}
-	request.Header.Set("user", from)
+	req.Header.Set("user", from)
 
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		if err := opentracing.GlobalTracer().Inject(
-			span.Context(),
-			opentracing.HTTPHeaders,
-			opentracing.HTTPHeadersCarrier(request.Header)); err != nil {
-			c.l.Log(err)
-		}
+		mux.InjectSpanInReq(span, req)
 	}
 
-	resp, err := c.client.Do(request)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		c.l.Log(err)
 		return nil, &domain.ErrTechnical{}

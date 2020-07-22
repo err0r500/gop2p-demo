@@ -2,7 +2,9 @@ package clientgateway
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"github.com/opentracing/opentracing-go"
 	"gop2p/domain"
 	"gop2p/driving/api.mux"
 	"gop2p/uc"
@@ -18,8 +20,7 @@ func New() uc.ClientGateway {
 	return caller{client: http.DefaultClient}
 }
 
-func (c caller) SendMsg(addr string, msg domain.Message, from string) error {
-	log.Println("SendMsg to", addr)
+func (c caller) SendMsg(ctx context.Context, addr string, msg domain.Message, from string) error {
 	reqBody, err := json.Marshal(mux.PostMessageBody{Message: msg.Content})
 	if err != nil {
 		log.Println(err)
@@ -32,6 +33,10 @@ func (c caller) SendMsg(addr string, msg domain.Message, from string) error {
 		return err
 	}
 	req.Header.Set("user", from)
+
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		mux.InjectSpanInReq(span, req)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {

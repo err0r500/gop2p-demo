@@ -24,7 +24,7 @@ import (
 type simpleLogger struct{}
 
 func (simpleLogger) Log(ll ...interface{}) {
-	log.Println(ll)
+	log.Println(ll...)
 }
 
 func setTracer() (opentracing.Tracer, io.Closer) {

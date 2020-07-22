@@ -4,7 +4,6 @@ import (
 	"errors"
 	"gop2p/domain"
 	"gop2p/uc"
-	"log"
 	"sync"
 )
 
@@ -23,6 +22,7 @@ type FailingSessionManager interface {
 	InjectErrorAt(failingMethod string)
 }
 
+// NewFailable is just for testing purposes
 func NewFailable() FailingSessionManager {
 	return &store{rw: &sync.Map{}, failingMethod: ""}
 }
@@ -35,7 +35,6 @@ func (s store) InsertSession(login, address string) error {
 	if s.failingMethod == "insertSession" {
 		return errors.New("woops")
 	}
-	log.Println("storing session", login, address)
 
 	s.rw.Store(login, domain.Session{Online: true, Address: address})
 	return nil

@@ -1,6 +1,7 @@
 package uc_test
 
 import (
+	"context"
 	"gop2p/domain"
 	"gop2p/uc"
 	"testing"
@@ -21,30 +22,31 @@ func TestStartSession(t *testing.T) {
 	uName := "alice"
 	uPswd := "alicePass"
 	address := "alice-machine:1234"
+	ctx := context.Background()
 
 	Convey("given a known user", t, func() {
 		uS, sM, sI := cleanServerLogic()
 		noErrorReturned(uS.InsertUser(uName, uPswd))
 
 		Convey("when he attempts to create a new session with valid creds & address", func() {
-			ucRet := sI.StartSession(uName, uPswd, address)
+			ucRet := sI.StartSession(ctx, uName, uPswd, address)
 			aNewSessionIsCreated(sM, uName)
 			noErrorReturned(ucRet)
 		})
 
 		Convey("same happy case but with invalid address", func() {
 			Convey("must have 2 part like host:port", func() {
-				ucRet := sI.StartSession(uName, uPswd, "anywhere")
+				ucRet := sI.StartSession(ctx, uName, uPswd, "anywhere")
 				noSessionIsCreated(sM, uName)
 				errorReturned(ucRet)
 			})
 			Convey("port must be an int", func() {
-				ucRet := sI.StartSession(uName, uPswd, "anywhere:abc")
+				ucRet := sI.StartSession(ctx, uName, uPswd, "anywhere:abc")
 				noSessionIsCreated(sM, uName)
 				errorReturned(ucRet)
 			})
 			Convey("port must be larger than 0", func() {
-				ucRet := sI.StartSession(uName, uPswd, "anywhere:0")
+				ucRet := sI.StartSession(ctx, uName, uPswd, "anywhere:0")
 				noSessionIsCreated(sM, uName)
 				errorReturned(ucRet)
 			})
@@ -52,14 +54,14 @@ func TestStartSession(t *testing.T) {
 
 		Convey("when another, unknown, user attempts to login", func() {
 			unknownUsername := "unknownUsername"
-			ucRet := sI.StartSession(unknownUsername, uPswd, address)
+			ucRet := sI.StartSession(ctx, unknownUsername, uPswd, address)
 			noSessionIsCreated(sM, unknownUsername)
 			resourceNotFoundErrIsReturned(ucRet)
 		})
 
 		Convey("when the same user, with the wrong password attempts to login", func() {
 			wrongPassword := "wrongPass"
-			ucRet := sI.StartSession(uName, wrongPassword, address)
+			ucRet := sI.StartSession(ctx, uName, wrongPassword, address)
 			noSessionIsCreated(sM, uName)
 			resourceNotFoundErrIsReturned(ucRet)
 		})
@@ -73,7 +75,7 @@ func TestStartSession(t *testing.T) {
 		Convey("if a tech error happens with the uS", func() {
 			us.InjectErrorAt("getUserByLogicPassword")
 			ucRet := uc.NewServerLogic(us, sessionManager.New()).
-				StartSession(uName, uPswd, address)
+				StartSession(ctx, uName, uPswd, address)
 
 			noSessionIsCreated(sm, uName)
 			techErrIsReturned(ucRet)
@@ -83,7 +85,7 @@ func TestStartSession(t *testing.T) {
 			sm.InjectErrorAt("insertSession")
 
 			ucRet := uc.NewServerLogic(us, sm).
-				StartSession(uName, uPswd, address)
+				StartSession(ctx, uName, uPswd, address)
 
 			noSessionIsCreated(sm, uName)
 			techErrIsReturned(ucRet)
@@ -96,6 +98,7 @@ func TestGetUserSession(t *testing.T) {
 	bobAddr := "bob:1234"
 	aliceName := "alice"
 	aliceAddr := "alice:2345"
+	ctx := context.Background()
 
 	Convey("given 2 connected users", t, func() {
 		userStore, sessionManager, sI := cleanServerLogic()
@@ -105,12 +108,12 @@ func TestGetUserSession(t *testing.T) {
 		So(sessionManager.InsertSession(aliceName, aliceAddr), ShouldBeNil)
 
 		Convey("they are able to get each other's session", func() {
-			aliceSession, err := sI.ProvideUserSession(bobName, aliceName)
+			aliceSession, err := sI.ProvideUserSession(ctx, bobName, aliceName)
 			So(err, ShouldBeNil)
 			So(aliceSession, ShouldNotBeNil)
 			So(aliceSession.Address, ShouldEqual, aliceAddr)
 
-			bobSess, err := sI.ProvideUserSession(aliceName, bobName)
+			bobSess, err := sI.ProvideUserSession(ctx, aliceName, bobName)
 			So(err, ShouldBeNil)
 			So(bobSess, ShouldNotBeNil)
 			So(bobSess.Address, ShouldEqual, bobAddr)
@@ -118,7 +121,7 @@ func TestGetUserSession(t *testing.T) {
 		})
 
 		Convey("a user has to be connected in order to retrieve a session", func() {
-			s, err := sI.ProvideUserSession("unknown", aliceName)
+			s, err := sI.ProvideUserSession(ctx, "unknown", aliceName)
 			Convey("an Unauthorized error is returned", func() {
 				So(err, ShouldHaveSameTypeAs, domain.ErrUnauthorized{})
 
@@ -127,7 +130,7 @@ func TestGetUserSession(t *testing.T) {
 		})
 
 		Convey("if the queried account has no session", func() {
-			s, err := sI.ProvideUserSession(aliceName, "unknown")
+			s, err := sI.ProvideUserSession(ctx, aliceName, "unknown")
 			Convey("a notFoundResource Error is returned", func() {
 				So(err, ShouldHaveSameTypeAs, domain.ErrResourceNotFound{})
 				So(s, ShouldBeNil)
@@ -145,14 +148,14 @@ func TestGetUserSession(t *testing.T) {
 
 		Convey("but a tech error happens when attempting to getUserByLogin", func() {
 			us.InjectErrorAt("getUserByLogin")
-			s, err := uc.NewServerLogic(us, sm).ProvideUserSession(aliceName, bobName)
+			s, err := uc.NewServerLogic(us, sm).ProvideUserSession(ctx, aliceName, bobName)
 			techErrIsReturned(err)
 			So(s, ShouldBeNil)
 		})
 
 		Convey("but a tech error happens when attempting to getSession", func() {
 			sm.InjectErrorAt("getSession")
-			s, err := uc.NewServerLogic(us, sm).ProvideUserSession(aliceName, bobName)
+			s, err := uc.NewServerLogic(us, sm).ProvideUserSession(ctx, aliceName, bobName)
 			techErrIsReturned(err)
 			So(s, ShouldBeNil)
 		})

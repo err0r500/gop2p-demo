@@ -9,9 +9,9 @@ import (
 
 // ClientFrontLogic handles the logic exposed to the frontend
 type ClientFrontLogic interface {
-	NewSessionRegistered(username string) error
-	SendMessageToOtherClient(toUserName string, msg string) error
-	GetConversationWith(authorName string) ([]domain.Message, error)
+	NewSessionRegistered(ctx context.Context, username string) error
+	SendMessageToOtherClient(ctx context.Context, toUserName string, msg string) error
+	GetConversationWith(ctx context.Context, authorName string) ([]domain.Message, error)
 }
 
 type clientFrontInteractor struct {
@@ -31,19 +31,17 @@ func NewClientFrontLogic(cm ConversationManager, sg ServerGateway, cg ClientGate
 }
 
 // RegisterNewSession is used by the client to register a new session
-func (i *clientFrontInteractor) NewSessionRegistered(username string) error {
-	tracer := opentracing.GlobalTracer()
-	span := tracer.StartSpan("http:new_session_ok")
+func (i *clientFrontInteractor) NewSessionRegistered(ctx context.Context, username string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:new_session_registered")
 	defer span.Finish()
 
-	log.Println("UC : newSesionRegistered", username)
 	i.currentUsername = username
 	return nil
 }
 
 // SendMessageToOtherClient is used by the client to send a message to another one
-func (i clientFrontInteractor) SendMessageToOtherClient(toUserName string, msg string) error {
-	span := opentracing.GlobalTracer().StartSpan("uc:send_message_to_other_client")
+func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toUserName string, msg string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:send_message_to_other_client")
 	defer span.Finish()
 
 	emitter := i.currentUsername
@@ -64,7 +62,7 @@ func (i clientFrontInteractor) SendMessageToOtherClient(toUserName string, msg s
 		return domain.ErrTechnical{}
 	}
 
-	if err := i.cg.SendMsg(s.Address,
+	if err := i.cg.SendMsg(ctx, s.Address,
 		domain.Message{Author: emitter, Content: msg},
 		i.currentUsername,
 	); err != nil {
@@ -76,8 +74,8 @@ func (i clientFrontInteractor) SendMessageToOtherClient(toUserName string, msg s
 }
 
 // GetConversationWith is used by the client to get a given conversation
-func (i clientFrontInteractor) GetConversationWith(authorName string) ([]domain.Message, error) {
-	span := opentracing.GlobalTracer().StartSpan("uc:get_conversation_with")
+func (i clientFrontInteractor) GetConversationWith(ctx context.Context, authorName string) ([]domain.Message, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:get_conversation_with")
 	defer span.Finish()
 
 	messages, err := i.cm.GetConversationWith(authorName)

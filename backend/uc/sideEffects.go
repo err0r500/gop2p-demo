@@ -31,7 +31,7 @@ type ServerGateway interface {
 
 // ClientGateway provides client -> client communication
 type ClientGateway interface {
-	SendMsg(addr string, msg domain.Message, from string) error
+	SendMsg(ctx context.Context, addr string, msg domain.Message, from string) error
 }
 
 type Logger interface {

@@ -1,6 +1,7 @@
 package uc
 
 import (
+	"context"
 	"github.com/opentracing/opentracing-go"
 	"gop2p/domain"
 	"strconv"
@@ -10,8 +11,8 @@ import (
 // ServerLogic handles the logic of the central server, we use a struct in order to be able to easily change
 // implementations in tests and because having several implementation is not very likely
 type ServerLogic struct {
-	StartSession       func(login, password, address string) error
-	ProvideUserSession func(srcLogin, dstLogin string) (*domain.Session, error)
+	StartSession       func(ctx context.Context, login, password, address string) error
+	ProvideUserSession func(ctx context.Context, srcLogin, dstLogin string) (*domain.Session, error)
 }
 
 type serverInteractor struct {
@@ -32,8 +33,8 @@ func NewServerLogic(uS UserStore, sM SessionManager) ServerLogic {
 
 // StartSessionInit registers the address where the client can be reached
 // returns nil if everything is OK
-func (i serverInteractor) StartSession(login, password, clientAddress string) error {
-	span := opentracing.GlobalTracer().StartSpan("uc:start_new_session")
+func (i serverInteractor) StartSession(ctx context.Context, login, password, clientAddress string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:start_new_session")
 	defer span.Finish()
 
 	if !validAddress(clientAddress) {
@@ -55,8 +56,8 @@ func (i serverInteractor) StartSession(login, password, clientAddress string) er
 }
 
 // ProvideUserSessionInit allows a client to get the session details of another one
-func (i serverInteractor) ProvideUserSession(srcLogin, dstLogin string) (*domain.Session, error) {
-	span := opentracing.GlobalTracer().StartSpan("uc:provide_user_session")
+func (i serverInteractor) ProvideUserSession(ctx context.Context, srcLogin, dstLogin string) (*domain.Session, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:provide_user_session")
 	defer span.Finish()
 
 	// only users with a session can ask for another user session

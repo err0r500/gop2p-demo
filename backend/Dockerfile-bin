@@ -1,0 +1,3 @@
+FROM gcr.io/distroless/base:nonroot
+COPY gop2p /app
+ENTRYPOINT [ "/app" ]
