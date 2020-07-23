@@ -3,8 +3,8 @@ package uc
 import (
 	"context"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
-	"log"
 )
 
 // ClientP2PLogic handles the logic of the central server
@@ -26,7 +26,7 @@ func (i clientp2pInteractor) HandleMessageReceived(ctx context.Context, msg stri
 	defer span.Finish()
 
 	if err := i.cm.AppendToConversationWith(emitter.Login, emitter.Login, msg); err != nil {
-		log.Println(err)
+		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
 

@@ -21,12 +21,6 @@ import (
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
-type simpleLogger struct{}
-
-func (simpleLogger) Log(ll ...interface{}) {
-	log.Println(ll...)
-}
-
 func setTracer() (opentracing.Tracer, io.Closer) {
 	cfg, err := jaegercfg.FromEnv()
 	if err != nil {
@@ -59,7 +53,7 @@ func startInClientMode(apiPort, p2pPort int, serverAddress string) {
 		mux.NewClientFrontRouter(
 			uc.NewClientFrontLogic(
 				cm,
-				servergateway.New(serverAddress, simpleLogger{}),
+				servergateway.New(serverAddress),
 				clientgateway.New(),
 			),
 			apiPort,

@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
 	"gop2p/driving/api.mux"
 	"gop2p/uc"
-	"log"
 	"net/http"
 )
 
@@ -21,30 +21,31 @@ func New() uc.ClientGateway {
 }
 
 func (c caller) SendMsg(ctx context.Context, addr string, msg domain.Message, from string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "http:send_message")
+	defer span.Finish()
+
 	reqBody, err := json.Marshal(mux.PostMessageBody{Message: msg.Content})
 	if err != nil {
-		log.Println(err)
+		span.LogFields(log.Error(err))
 		return err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "http://"+addr+"/messages/", bytes.NewBuffer(reqBody))
 	if err != nil {
-		log.Println(err)
+		span.LogFields(log.Error(err))
 		return err
 	}
 	req.Header.Set("user", from)
 
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		mux.InjectSpanInReq(span, req)
-	}
+	mux.InjectSpanInReq(span, req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		log.Println(err)
+		span.LogFields(log.Error(err))
 		return err
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Println(resp)
+		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
 

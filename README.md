@@ -51,5 +51,4 @@ Remediation, example PKI :
 1. then mTLS secures the communication between the peers
 
 ## TODO
-- change all the log.Println to logger.Log
 - add the tests to remaining usecases, at least happy cases, server is fine for the rest

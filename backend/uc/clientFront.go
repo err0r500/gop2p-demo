@@ -3,8 +3,9 @@ package uc
 import (
 	"context"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
+	"github.com/pkg/errors"
 	"gop2p/domain"
-	"log"
 )
 
 // ClientFrontLogic handles the logic exposed to the frontend
@@ -46,19 +47,22 @@ func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toU
 
 	emitter := i.currentUsername
 	if emitter == "" {
-		log.Println("unauthorized currentUser is empty")
+		span.LogFields(log.Error(errors.New("missing current user session")))
 		return domain.ErrUnauthorized{}
 	}
 
 	s, err := i.sg.AskSessionToServer(opentracing.ContextWithSpan(context.Background(), span), emitter, toUserName)
 	if err != nil {
+		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
 	if s == nil {
+		span.LogFields(log.Error(errors.New("session not found")))
 		return domain.ErrResourceNotFound{}
 	}
 
 	if err := i.cm.AppendToConversationWith(toUserName, emitter, msg); err != nil {
+		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
 
@@ -66,10 +70,10 @@ func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toU
 		domain.Message{Author: emitter, Content: msg},
 		i.currentUsername,
 	); err != nil {
+		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
 
-	log.Println("sent new message to", toUserName)
 	return nil
 }
 
@@ -80,6 +84,7 @@ func (i clientFrontInteractor) GetConversationWith(ctx context.Context, authorNa
 
 	messages, err := i.cm.GetConversationWith(authorName)
 	if err != nil {
+		span.LogFields(log.Error(err))
 		return nil, domain.ErrTechnical{}
 	}
 

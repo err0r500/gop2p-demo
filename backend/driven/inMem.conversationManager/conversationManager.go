@@ -56,7 +56,6 @@ func (s store) AppendToConversationWith(userName, msgAuthor, msgContent string) 
 	// userName is the "other" user (not the one storing)
 	val, ok := s.rw.Load(userName)
 	if !ok {
-		log.Println("first message in conversation")
 		// first message in conversation
 		s.rw.Store(userName, []domain.Message{{Author: msgAuthor, Content: msgContent}})
 		return nil
