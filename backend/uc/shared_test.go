@@ -10,16 +10,16 @@ import (
 
 func noSessionIsCreated(sm uc.SessionManager, uName string) {
 	Convey("no new session is created", func() {
-		session, err := sm.GetSession(context.Background(), uName)
-		So(err, ShouldBeNil)
+		session, ok := sm.GetSession(context.Background(), uName)
+		So(ok, ShouldBeTrue)
 		So(session, ShouldBeNil)
 	})
 }
 
 func aNewSessionIsCreated(sm uc.SessionManager, uName string) {
 	Convey("a new session is created", func() {
-		session, err := sm.GetSession(context.Background(), uName)
-		So(err, ShouldBeNil)
+		session, ok := sm.GetSession(context.Background(), uName)
+		So(ok, ShouldBeTrue)
 		So(session, ShouldNotBeNil)
 	})
 }

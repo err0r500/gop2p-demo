@@ -33,34 +33,33 @@ func (s *store) InjectErrorAt(failingMethod string) {
 	s.failingMethod = failingMethod
 }
 
-func (s store) GetConversationWith(ctx context.Context, authorName string) ([]domain.Message, error) {
+func (s store) GetConversationWith(ctx context.Context, authorName string) ([]domain.Message, bool) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "conversation_manager:get-conversation_with")
 	defer span.Finish()
 
 	if s.failingMethod == "getConversationWith" {
-		return nil, errors.New("woops")
+		return nil, false
 	}
 
 	val, ok := s.rw.Load(authorName)
 	if !ok {
-		return nil, nil
+		return nil, true
 	}
 
 	conversation, ok := val.([]domain.Message)
 	if !ok {
-		err := errors.New("not a conversation stored at Key")
-		span.LogFields(log.Error(err))
-		return nil, err
+		span.LogFields(log.Error(errors.New("not a conversation stored at Key")))
+		return nil, false
 	}
-	return conversation, nil
+	return conversation, true
 }
 
-func (s store) AppendToConversationWith(ctx context.Context, userName, msgAuthor, msgContent string) error {
+func (s store) AppendToConversationWith(ctx context.Context, userName, msgAuthor, msgContent string) bool {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "conversation_manager:append_to_conversation")
 	defer span.Finish()
 
 	if s.failingMethod == "appendToConversationWith" {
-		return errors.New("woops")
+		return false
 	}
 
 	// userName is the "other" user (not the one storing)
@@ -68,16 +67,16 @@ func (s store) AppendToConversationWith(ctx context.Context, userName, msgAuthor
 	if !ok {
 		// first message in conversation
 		s.rw.Store(userName, []domain.Message{{Author: msgAuthor, Content: msgContent}})
-		return nil
+		return true
 	}
 
 	conversation, ok := val.([]domain.Message)
 	if !ok {
-		err := errors.New("not a conversation stored at Key")
-		span.LogFields(log.Error(err))
-		return err
+		span.LogFields(log.Error(errors.New("not a conversation stored at Key")))
+		return false
 	}
 
 	s.rw.Store(userName, append(conversation, domain.Message{Author: msgAuthor, Content: msgContent}))
-	return nil
+	return true
+
 }

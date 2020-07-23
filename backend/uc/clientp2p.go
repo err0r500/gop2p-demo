@@ -3,7 +3,6 @@ package uc
 import (
 	"context"
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
 )
 
@@ -25,8 +24,7 @@ func (i clientp2pInteractor) HandleMessageReceived(ctx context.Context, msg stri
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:handle_new_message_received")
 	defer span.Finish()
 
-	if err := i.cm.AppendToConversationWith(ctx, emitter.Login, emitter.Login, msg); err != nil {
-		span.LogFields(log.Error(err))
+	if ok := i.cm.AppendToConversationWith(ctx, emitter.Login, emitter.Login, msg); !ok {
 		return domain.ErrTechnical{}
 	}
 

@@ -21,14 +21,14 @@ func New(serverAddress string) uc.ServerGateway {
 	return caller{serverAddress: serverAddress, client: http.DefaultClient}
 }
 
-func (c caller) AskSessionToServer(ctx context.Context, from string, to string) (*domain.Session, error) {
+func (c caller) AskSessionToServer(ctx context.Context, from string, to string) (*domain.Session, bool) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ask_session_to_server")
 	defer span.Finish()
 
 	req, err := http.NewRequest(http.MethodGet, "http://"+c.serverAddress+"/sessions/"+to, nil)
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return nil, &domain.ErrTechnical{}
+		return nil, false
 	}
 	req.Header.Set("user", from)
 
@@ -37,20 +37,20 @@ func (c caller) AskSessionToServer(ctx context.Context, from string, to string) 
 	resp, err := c.client.Do(req)
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return nil, &domain.ErrTechnical{}
+		return nil, false
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return nil, &domain.ErrTechnical{}
+		return nil, false
 	}
 
 	session := &domain.Session{}
 	if err := json.Unmarshal(body, session); err != nil {
 		span.LogFields(log.Error(err))
-		return nil, &domain.ErrTechnical{}
+		return nil, false
 	}
 
-	return session, nil
+	return session, true
 }

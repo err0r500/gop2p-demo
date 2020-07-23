@@ -51,9 +51,8 @@ func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toU
 		return domain.ErrUnauthorized{}
 	}
 
-	s, err := i.sg.AskSessionToServer(opentracing.ContextWithSpan(context.Background(), span), emitter, toUserName)
-	if err != nil {
-		span.LogFields(log.Error(err))
+	s, ok := i.sg.AskSessionToServer(opentracing.ContextWithSpan(context.Background(), span), emitter, toUserName)
+	if !ok {
 		return domain.ErrTechnical{}
 	}
 	if s == nil {
@@ -61,16 +60,14 @@ func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toU
 		return domain.ErrResourceNotFound{}
 	}
 
-	if err := i.cm.AppendToConversationWith(ctx, toUserName, emitter, msg); err != nil {
-		span.LogFields(log.Error(err))
+	if ok := i.cm.AppendToConversationWith(ctx, toUserName, emitter, msg); !ok {
 		return domain.ErrTechnical{}
 	}
 
-	if err := i.cg.SendMsg(ctx, s.Address,
+	if ok := i.cg.SendMsg(ctx, s.Address,
 		domain.Message{Author: emitter, Content: msg},
 		i.currentUsername,
-	); err != nil {
-		span.LogFields(log.Error(err))
+	); !ok {
 		return domain.ErrTechnical{}
 	}
 
@@ -82,9 +79,8 @@ func (i clientFrontInteractor) GetConversationWith(ctx context.Context, authorNa
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:get_conversation_with")
 	defer span.Finish()
 
-	messages, err := i.cm.GetConversationWith(ctx, authorName)
-	if err != nil {
-		span.LogFields(log.Error(err))
+	messages, ok := i.cm.GetConversationWith(ctx, authorName)
+	if !ok {
 		return nil, domain.ErrTechnical{}
 	}
 

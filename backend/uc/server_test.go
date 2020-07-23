@@ -26,7 +26,7 @@ func TestStartSession(t *testing.T) {
 
 	Convey("given a known user", t, func() {
 		uS, sM, sI := cleanServerLogic()
-		noErrorReturned(uS.InsertUser(ctx, uName, uPswd))
+		So(uS.InsertUser(ctx, uName, uPswd), ShouldBeTrue)
 
 		Convey("when he attempts to create a new session with valid creds & address", func() {
 			ucRet := sI.StartSession(ctx, uName, uPswd, address)
@@ -70,7 +70,7 @@ func TestStartSession(t *testing.T) {
 	Convey("when everything should go fine", t, func() {
 		us := userStore.NewFailable()
 		sm := sessionManager.NewFailable()
-		noErrorReturned(us.InsertUser(ctx, uName, uPswd))
+		So(us.InsertUser(ctx, uName, uPswd), ShouldBeTrue)
 
 		Convey("if a tech error happens with the uS", func() {
 			us.InjectErrorAt("getUserByLogicPassword")
@@ -102,10 +102,10 @@ func TestGetUserSession(t *testing.T) {
 
 	Convey("given 2 connected users", t, func() {
 		userStore, sessionManager, sI := cleanServerLogic()
-		So(userStore.InsertUser(ctx, bobName, "pass"), ShouldBeNil)
-		So(userStore.InsertUser(ctx, aliceName, "pass"), ShouldBeNil)
-		So(sessionManager.InsertSession(ctx, bobName, bobAddr), ShouldBeNil)
-		So(sessionManager.InsertSession(ctx, aliceName, aliceAddr), ShouldBeNil)
+		So(userStore.InsertUser(ctx, bobName, "pass"), ShouldBeTrue)
+		So(userStore.InsertUser(ctx, aliceName, "pass"), ShouldBeTrue)
+		So(sessionManager.InsertSession(ctx, bobName, bobAddr), ShouldBeTrue)
+		So(sessionManager.InsertSession(ctx, aliceName, aliceAddr), ShouldBeTrue)
 
 		Convey("they are able to get each other's session", func() {
 			aliceSession, err := sI.ProvideUserSession(ctx, bobName, aliceName)
@@ -141,10 +141,10 @@ func TestGetUserSession(t *testing.T) {
 	Convey("when everything should go fine", t, func() {
 		us := userStore.NewFailable()
 		sm := sessionManager.NewFailable()
-		So(us.InsertUser(ctx, bobName, "pass"), ShouldBeNil)
-		So(us.InsertUser(ctx, aliceName, "pass"), ShouldBeNil)
-		So(sm.InsertSession(ctx, bobName, bobAddr), ShouldBeNil)
-		So(sm.InsertSession(ctx, aliceName, aliceAddr), ShouldBeNil)
+		So(us.InsertUser(ctx, bobName, "pass"), ShouldBeTrue)
+		So(us.InsertUser(ctx, aliceName, "pass"), ShouldBeTrue)
+		So(sm.InsertSession(ctx, bobName, bobAddr), ShouldBeTrue)
+		So(sm.InsertSession(ctx, aliceName, aliceAddr), ShouldBeTrue)
 
 		Convey("but a tech error happens when attempting to getUserByLogin", func() {
 			us.InjectErrorAt("getUserByLogin")

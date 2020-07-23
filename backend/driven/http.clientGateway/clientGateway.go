@@ -20,20 +20,20 @@ func New() uc.ClientGateway {
 	return caller{client: http.DefaultClient}
 }
 
-func (c caller) SendMsg(ctx context.Context, addr string, msg domain.Message, from string) error {
+func (c caller) SendMsg(ctx context.Context, addr string, msg domain.Message, from string) bool {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "http:send_message")
 	defer span.Finish()
 
 	reqBody, err := json.Marshal(mux.PostMessageBody{Message: msg.Content})
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return err
+		return false
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "http://"+addr+"/messages/", bytes.NewBuffer(reqBody))
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return err
+		return false
 	}
 	req.Header.Set("user", from)
 
@@ -42,12 +42,12 @@ func (c caller) SendMsg(ctx context.Context, addr string, msg domain.Message, fr
 	resp, err := c.client.Do(req)
 	if err != nil {
 		span.LogFields(log.Error(err))
-		return err
+		return false
 	}
 	if resp.StatusCode != http.StatusOK {
 		span.LogFields(log.Error(err))
-		return domain.ErrTechnical{}
+		return false
 	}
 
-	return nil
+	return true
 }

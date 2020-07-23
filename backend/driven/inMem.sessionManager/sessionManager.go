@@ -34,37 +34,37 @@ func (s *store) InjectErrorAt(failingMethod string) {
 	s.failingMethod = failingMethod
 }
 
-func (s store) InsertSession(ctx context.Context, login, address string) error {
+func (s store) InsertSession(ctx context.Context, login, address string) bool {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "session_manager:insert_session")
 	defer span.Finish()
 
 	if s.failingMethod == "insertSession" {
-		return errors.New("woops")
+		return false
 	}
 
 	s.rw.Store(login, domain.Session{Online: true, Address: address})
-	return nil
+	return true
 }
 
-func (s store) GetSession(ctx context.Context, login string) (*domain.Session, error) {
+func (s store) GetSession(ctx context.Context, login string) (*domain.Session, bool) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "session_manager:get_session")
 	defer span.Finish()
 
 	if s.failingMethod == "getSession" {
-		return nil, domain.ErrTechnical{}
+		return nil, false
 	}
 
 	val, ok := s.rw.Load(login)
 	if !ok {
-		return nil, nil
+		return nil, true
 	}
 
 	session, ok := val.(domain.Session)
 	if !ok {
 		err := errors.New("not a session stored at Key")
 		span.LogFields(log.Error(err))
-		return nil, err
+		return nil, true
 	}
 
-	return &session, nil
+	return &session, true
 }
