@@ -25,7 +25,7 @@ func (i clientp2pInteractor) HandleMessageReceived(ctx context.Context, msg stri
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:handle_new_message_received")
 	defer span.Finish()
 
-	if err := i.cm.AppendToConversationWith(emitter.Login, emitter.Login, msg); err != nil {
+	if err := i.cm.AppendToConversationWith(ctx, emitter.Login, emitter.Login, msg); err != nil {
 		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}

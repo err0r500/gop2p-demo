@@ -21,7 +21,7 @@ func New(serverAddress string) uc.ServerGateway {
 	return caller{serverAddress: serverAddress, client: http.DefaultClient}
 }
 
-func (c caller) AskSessionToServer(ctx context.Context, from string, to string) (*domain.Session, *domain.ErrTechnical) {
+func (c caller) AskSessionToServer(ctx context.Context, from string, to string) (*domain.Session, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ask_session_to_server")
 	defer span.Finish()
 

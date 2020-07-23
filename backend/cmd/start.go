@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"gop2p/driven/http.clientGateway"
 	"gop2p/driven/http.serverGateway"
@@ -73,10 +74,11 @@ func startInServerMode(apiPort int) {
 	defer closer.Close()
 
 	us := userstore.New()
+	ctx := context.Background()
 
 	// we just add 2 users for testing
-	us.InsertUser("alice", "pass")
-	us.InsertUser("bob", "pass")
+	us.InsertUser(ctx, "alice", "pass")
+	us.InsertUser(ctx, "bob", "pass")
 
 	mux.NewServerRouter(
 		uc.NewServerLogic(

@@ -41,7 +41,7 @@ func (i serverInteractor) StartSession(ctx context.Context, login, password, cli
 		return domain.ErrMalformed{Details: []string{"the address provided is invalid"}}
 	}
 
-	user, err := i.uS.GetUserByLoginPassword(login, password)
+	user, err := i.uS.GetUserByLoginPassword(ctx, login, password)
 	if err != nil {
 		return domain.ErrTechnical{}
 	}
@@ -49,7 +49,7 @@ func (i serverInteractor) StartSession(ctx context.Context, login, password, cli
 		return domain.ErrResourceNotFound{}
 	}
 
-	if err := i.sM.InsertSession(login, clientAddress); err != nil {
+	if err := i.sM.InsertSession(ctx, login, clientAddress); err != nil {
 		return domain.ErrTechnical{}
 	}
 	return nil
@@ -61,7 +61,7 @@ func (i serverInteractor) ProvideUserSession(ctx context.Context, srcLogin, dstL
 	defer span.Finish()
 
 	// only users with a session can ask for another user session
-	u, err := i.uS.GetUserByLogin(srcLogin)
+	u, err := i.uS.GetUserByLogin(ctx, srcLogin)
 	if err != nil {
 		return nil, domain.ErrTechnical{}
 	}
@@ -69,7 +69,7 @@ func (i serverInteractor) ProvideUserSession(ctx context.Context, srcLogin, dstL
 		return nil, domain.ErrUnauthorized{}
 	}
 
-	s, err := i.sM.GetSession(dstLogin)
+	s, err := i.sM.GetSession(ctx, dstLogin)
 	if err != nil {
 		return nil, domain.ErrTechnical{}
 	}

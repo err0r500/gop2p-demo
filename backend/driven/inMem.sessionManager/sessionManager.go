@@ -1,7 +1,10 @@
 package sessionmanager
 
 import (
+	"context"
 	"errors"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
 	"gop2p/uc"
 	"sync"
@@ -31,7 +34,10 @@ func (s *store) InjectErrorAt(failingMethod string) {
 	s.failingMethod = failingMethod
 }
 
-func (s store) InsertSession(login, address string) error {
+func (s store) InsertSession(ctx context.Context, login, address string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "session_manager:insert_session")
+	defer span.Finish()
+
 	if s.failingMethod == "insertSession" {
 		return errors.New("woops")
 	}
@@ -40,9 +46,12 @@ func (s store) InsertSession(login, address string) error {
 	return nil
 }
 
-func (s store) GetSession(login string) (*domain.Session, error) {
+func (s store) GetSession(ctx context.Context, login string) (*domain.Session, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "session_manager:get_session")
+	defer span.Finish()
+
 	if s.failingMethod == "getSession" {
-		return nil, errors.New("woops")
+		return nil, domain.ErrTechnical{}
 	}
 
 	val, ok := s.rw.Load(login)
@@ -52,7 +61,9 @@ func (s store) GetSession(login string) (*domain.Session, error) {
 
 	session, ok := val.(domain.Session)
 	if !ok {
-		return nil, errors.New("not a session stored at key")
+		err := errors.New("not a session stored at Key")
+		span.LogFields(log.Error(err))
+		return nil, err
 	}
 
 	return &session, nil

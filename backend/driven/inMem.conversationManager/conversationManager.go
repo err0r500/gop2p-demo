@@ -1,10 +1,12 @@
 package conversationmanager
 
 import (
+	"context"
 	"errors"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
 	"gop2p/uc"
-	"log"
 	"sync"
 )
 
@@ -31,7 +33,10 @@ func (s *store) InjectErrorAt(failingMethod string) {
 	s.failingMethod = failingMethod
 }
 
-func (s store) GetConversationWith(authorName string) ([]domain.Message, error) {
+func (s store) GetConversationWith(ctx context.Context, authorName string) ([]domain.Message, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "conversation_manager:get-conversation_with")
+	defer span.Finish()
+
 	if s.failingMethod == "getConversationWith" {
 		return nil, errors.New("woops")
 	}
@@ -43,12 +48,17 @@ func (s store) GetConversationWith(authorName string) ([]domain.Message, error) 
 
 	conversation, ok := val.([]domain.Message)
 	if !ok {
-		return nil, errors.New("not a conversation stored at key")
+		err := errors.New("not a conversation stored at Key")
+		span.LogFields(log.Error(err))
+		return nil, err
 	}
 	return conversation, nil
 }
 
-func (s store) AppendToConversationWith(userName, msgAuthor, msgContent string) error {
+func (s store) AppendToConversationWith(ctx context.Context, userName, msgAuthor, msgContent string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "conversation_manager:append_to_conversation")
+	defer span.Finish()
+
 	if s.failingMethod == "appendToConversationWith" {
 		return errors.New("woops")
 	}
@@ -63,8 +73,8 @@ func (s store) AppendToConversationWith(userName, msgAuthor, msgContent string) 
 
 	conversation, ok := val.([]domain.Message)
 	if !ok {
-		err := errors.New("not a conversation stored at key")
-		log.Println(err)
+		err := errors.New("not a conversation stored at Key")
+		span.LogFields(log.Error(err))
 		return err
 	}
 

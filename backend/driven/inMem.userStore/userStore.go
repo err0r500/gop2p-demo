@@ -1,7 +1,10 @@
 package userstore
 
 import (
+	"context"
 	"errors"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"gop2p/domain"
 	"gop2p/uc"
 	"sync"
@@ -30,7 +33,10 @@ func (s *store) InjectErrorAt(failingMethod string) {
 	s.failingMethod = failingMethod
 }
 
-func (s store) InsertUser(login, password string) error {
+func (s store) InsertUser(ctx context.Context, login, password string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "user_store:insert_user")
+	defer span.Finish()
+
 	if s.failingMethod == "insertUser" {
 		return errors.New("woops")
 	}
@@ -40,7 +46,10 @@ func (s store) InsertUser(login, password string) error {
 	return nil
 }
 
-func (s store) GetUserByLoginPassword(login, password string) (*domain.User, error) {
+func (s store) GetUserByLoginPassword(ctx context.Context, login, password string) (*domain.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "user_store:get_user_by_login_pass")
+	defer span.Finish()
+
 	if s.failingMethod == "getUserByLogicPassword" {
 		return nil, errors.New("woops")
 	}
@@ -52,16 +61,22 @@ func (s store) GetUserByLoginPassword(login, password string) (*domain.User, err
 
 	user, ok := val.(domain.User)
 	if !ok {
-		return nil, errors.New("not a user stored at Key")
+		err := errors.New("not a user stored at Key")
+		span.LogFields(log.Error(err))
+		return nil, err
 	}
 	if user.Password != password {
+		span.LogFields(log.Event("passwords don't match"))
 		return nil, nil
 	}
 
 	return &user, nil
 }
 
-func (s store) GetUserByLogin(login string) (*domain.User, error) {
+func (s store) GetUserByLogin(ctx context.Context, login string) (*domain.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "user_store:get_user_by_login")
+	defer span.Finish()
+
 	if s.failingMethod == "getUserByLogin" {
 		return nil, errors.New("woops")
 	}
@@ -73,7 +88,9 @@ func (s store) GetUserByLogin(login string) (*domain.User, error) {
 
 	user, ok := val.(domain.User)
 	if !ok {
-		return nil, errors.New("not a user stored at Key")
+		err := errors.New("not a user stored at Key")
+		span.LogFields(log.Error(err))
+		return nil, err
 	}
 
 	return &user, nil

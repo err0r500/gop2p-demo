@@ -1,6 +1,7 @@
 package uc_test
 
 import (
+	"context"
 	"gop2p/domain"
 	"gop2p/uc"
 
@@ -9,7 +10,7 @@ import (
 
 func noSessionIsCreated(sm uc.SessionManager, uName string) {
 	Convey("no new session is created", func() {
-		session, err := sm.GetSession(uName)
+		session, err := sm.GetSession(context.Background(), uName)
 		So(err, ShouldBeNil)
 		So(session, ShouldBeNil)
 	})
@@ -17,7 +18,7 @@ func noSessionIsCreated(sm uc.SessionManager, uName string) {
 
 func aNewSessionIsCreated(sm uc.SessionManager, uName string) {
 	Convey("a new session is created", func() {
-		session, err := sm.GetSession(uName)
+		session, err := sm.GetSession(context.Background(), uName)
 		So(err, ShouldBeNil)
 		So(session, ShouldNotBeNil)
 	})

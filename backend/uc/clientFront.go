@@ -61,7 +61,7 @@ func (i clientFrontInteractor) SendMessageToOtherClient(ctx context.Context, toU
 		return domain.ErrResourceNotFound{}
 	}
 
-	if err := i.cm.AppendToConversationWith(toUserName, emitter, msg); err != nil {
+	if err := i.cm.AppendToConversationWith(ctx, toUserName, emitter, msg); err != nil {
 		span.LogFields(log.Error(err))
 		return domain.ErrTechnical{}
 	}
@@ -82,7 +82,7 @@ func (i clientFrontInteractor) GetConversationWith(ctx context.Context, authorNa
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uc:get_conversation_with")
 	defer span.Finish()
 
-	messages, err := i.cm.GetConversationWith(authorName)
+	messages, err := i.cm.GetConversationWith(ctx, authorName)
 	if err != nil {
 		span.LogFields(log.Error(err))
 		return nil, domain.ErrTechnical{}
