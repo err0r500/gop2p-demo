@@ -4,7 +4,8 @@
 - __clean architecture__ (aka ports & adapters)
     - core data structures are in [domain](./backend/domain/)
     - usecases (business logic) in [uc](./backend/uc/)
-    - driven ports (calling usecases) in [driven](./backend/driven/)
+    - driving ports (calling usecases) in [driving](./backend/driving/)
+    - driven ports (called by usecases) in [driven](./backend/driven/)
 - __CQRS__ :
   - if a function modifies the state of the system, it returns nothing (errors don't count)
   - if a function returns something, it doesn't modify the system
