@@ -18,6 +18,8 @@ func clientFrontSessionsHandler(logic uc.ClientFrontLogic, serverAddress *url.UR
 	handleSuccessfulRegistration := func(ctx context.Context, username string) func(resp *http.Response) (err error) {
 		return func(resp *http.Response) (err error) {
 			span, ctx := opentracing.StartSpanFromContext(ctx, "post_session_response")
+			defer span.Finish()
+
 			if resp.StatusCode == http.StatusOK {
 				if err := logic.NewSessionRegistered(ctx, username); err != nil {
 					return err
